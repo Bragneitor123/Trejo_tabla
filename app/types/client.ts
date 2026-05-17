@@ -2,10 +2,12 @@
 export type Cliente = {
   id: number;
   tiempoLlegada: number;
+  tiempoEntreLlegadas: number;
   tiempoServicio: number;
   tiempoEspera: number;
   inicioServicio: number;
   finServicio: number;
+  tiempoTramite: number;
   estado: string;
 };
 

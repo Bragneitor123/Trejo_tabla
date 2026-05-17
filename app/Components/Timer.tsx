@@ -16,6 +16,12 @@ export default function Timer() {
 
   const [cajeroLibre, setCajeroLibre] = useState(true);
 
+  // limite maximo de clientes permitidos
+  const LIMITE_CLIENTES = 50;
+
+  // estado que controla si ya se alcanzo el limite
+  const [limiteAlcanzado, setLimiteAlcanzado] = useState(false);
+
   // referencia que guarda el estado actual del cajero
   // sin recrear el setInterval
   const cajeroLibreRef = useRef(cajeroLibre);
@@ -46,11 +52,33 @@ export default function Timer() {
 
         setClientes((prevClientes) => {
 
+          // detener generacion cuando llegue al limite
+          if (prevClientes.length >= LIMITE_CLIENTES) {
+
+            setLimiteAlcanzado(true);
+
+            return prevClientes;
+
+          }
+
+          // obtener ultimo cliente registrado
+          const ultimoCliente =
+            prevClientes[prevClientes.length - 1];
+
+          // calcular tiempo entre llegadas
+          const tiempoEntreLlegadas =
+            ultimoCliente
+              ? nuevoTiempo - ultimoCliente.tiempoLlegada
+              : nuevoTiempo;
+
+          // crear nuevo cliente con tiempos y estado inicial
           const nuevoCliente: Cliente = {
 
             id: prevClientes.length + 1,
 
             tiempoLlegada: nuevoTiempo,
+
+            tiempoEntreLlegadas: tiempoEntreLlegadas,
 
             tiempoServicio: random(1, 10),
 
@@ -60,6 +88,8 @@ export default function Timer() {
 
             finServicio: 0,
 
+            tiempoTramite: 0,
+
             estado: "esperando"
 
           };
@@ -68,6 +98,8 @@ export default function Timer() {
           if (cajeroLibreRef.current) {
 
             nuevoCliente.estado = "atendiendo";
+
+            nuevoCliente.tiempoTramite = 0;
 
             nuevoCliente.inicioServicio = nuevoTiempo;
 
@@ -103,11 +135,31 @@ export default function Timer() {
     return () => clearInterval(interval);
 
   }, []);
-  //Ssegundo disparador que se enarga de dar los estados del timer segun el cliente actual y la cola de clientes esperando, 
+  //Segundo disparador que se enarga de dar los estados del timer segun el cliente actual y la cola de clientes esperando, 
   // ademas de actualizar los estados de cada cliente en la tabla
   useEffect(() => {
 
     if (!clienteActual) return;
+
+    // actualizar reloj del cliente actual
+    // actualizar reloj del cliente actual
+    setTimeout(() => {
+
+      setClientes((prevClientes) =>
+        prevClientes.map((cliente) =>
+
+          cliente.id === clienteActual.id
+            ? {
+              ...cliente,
+              tiempoTramite:
+                time - cliente.inicioServicio
+            }
+            : cliente
+
+        )
+      );
+
+    }, 0);
 
     // revisa si el cliente terminó
     if (time >= clienteActual.finServicio) {
@@ -121,7 +173,8 @@ export default function Timer() {
             cliente.id === clienteActual.id
               ? {
                 ...cliente,
-                estado: "terminado"
+                estado: "terminado",
+                tiempoTramite: cliente.finServicio - cliente.inicioServicio
               }
               : cliente
 
@@ -174,38 +227,108 @@ export default function Timer() {
     }
 
   }, [time, clienteActual, cola]);
+
+  // efecto que detecta cuando toda la simulacion termino
+  useEffect(() => {
+
+    if (
+
+      limiteAlcanzado &&
+
+      cola.length === 0 &&
+
+      !clienteActual
+
+    ) {
+
+      console.log("SIMULACION TERMINADA");
+
+    }
+
+  }, [limiteAlcanzado, cola, clienteActual]);
   //muestreo del tiempo global junto a la tabla clientes
   return (
 
-    <div>
+    <div className="min-h-screen bg-gray-100 p-8">
 
-      <h1>Tiempo Global: {time}</h1>
+      <h1 className="text-4xl font-bold mb-8 text-center">
+        Simulación de Cola
+      </h1>
 
-      <h2>
-        Cliente actual:
-        {clienteActual
-          ? ` Cliente ${clienteActual.id}`
-          : " Ninguno"}
-      </h2>
+      {/* PANEL SUPERIOR */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
 
-      <h2>
-        Clientes en cola: {cola.length}
-      </h2>
+        <div className="bg-white p-4 rounded-xl shadow">
+          <h2 className="text-gray-500">
+            Tiempo Global
+          </h2>
 
-      <h2>
-        Clientes terminados: {
-          clientes.filter(
-            (cliente) =>
-              cliente.estado === "terminado"
-          ).length
-        }
-      </h2>
+          <p className="text-2xl font-bold">
+            {time}
+          </p>
+        </div>
 
-      <h2>
-        Total clientes: {clientes.length}
-      </h2>
+        <div className="bg-white p-4 rounded-xl shadow">
+          <h2 className="text-gray-500">
+            Cliente actual
+          </h2>
 
-      <ClientTable clientes={clientes} />
+          <p className="text-2xl font-bold">
+            {
+              clienteActual
+                ? clienteActual.id
+                : "Ninguno"
+            }
+          </p>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl shadow">
+          <h2 className="text-gray-500">
+            En cola
+          </h2>
+
+          <p className="text-2xl font-bold">
+            {cola.length}
+          </p>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl shadow">
+          <h2 className="text-gray-500">
+            Terminados
+          </h2>
+
+          <p className="text-2xl font-bold">
+            {
+              clientes.filter(
+                (cliente) =>
+                  cliente.estado === "terminado"
+              ).length
+            }
+          </p>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl shadow">
+          <h2 className="text-gray-500">
+            Estado
+          </h2>
+
+          <p className="text-2xl font-bold">
+            {
+              limiteAlcanzado
+                ? "Cerrado"
+                : "Abierto"
+            }
+          </p>
+        </div>
+
+      </div>
+
+      {/* TABLA */}
+      <div className="bg-white rounded-xl shadow p-4 overflow-auto">
+
+        <ClientTable clientes={clientes} />
+
+      </div>
 
     </div>
 
