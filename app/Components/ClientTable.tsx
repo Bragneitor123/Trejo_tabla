@@ -5,7 +5,21 @@ import { Cliente } from "../types/client";
 type Props = {
   clientes: Cliente[];
 };
+function formatearTiempo(segundos: number) {
 
+  const minutos =
+    Math.floor(segundos / 60)
+      .toString()
+      .padStart(2, "0");
+
+  const secs =
+    (segundos % 60)
+      .toString()
+      .padStart(2, "0");
+
+  return `${minutos}:${secs}`;
+
+}
 // funcion de tabla clientes que se encarga de hacer aparecer la tabla en la interfaz UI basica en la pantalla
 export default function ClientTable({ clientes }: Props) {
 
@@ -16,16 +30,33 @@ export default function ClientTable({ clientes }: Props) {
       <thead>
 
         <tr className="bg-gray-200">
-
-          <th className="p-3">Cliente</th>
-          <th className="p-3">Llegada</th>
-          <th className="p-3">Entre Llegadas</th>
-          <th className="p-3">Servicio</th>
-          <th className="p-3">Espera</th>
-          <th className="p-3">Inicio</th>
-          <th className="p-3">Fin</th>
-          <th className="p-3">Trámite</th>
-          <th className="p-3">Estado</th>
+          <th className="p-3">
+            Cliente
+          </th>
+          <th className="p-3">
+            Tiempo Llegada
+          </th>
+          <th className="p-3">
+            Tiempo Entre Llegadas
+          </th>
+          <th className="p-3">
+            Tiempo Servicio
+          </th>
+          <th className="p-3">
+            Tiempo Espera
+          </th>
+          <th className="p-3">
+            Inicio Servicio
+          </th>
+          <th className="p-3">
+            Fin Servicio
+          </th>
+          <th className="p-3">
+            Tiempo Trámite
+          </th>
+          <th className="p-3">
+            Estado
+          </th>
 
         </tr>
 
@@ -51,7 +82,7 @@ export default function ClientTable({ clientes }: Props) {
             </td>
 
             <td className="p-2">
-              {cliente.tiempoServicio}
+              {formatearTiempo(cliente.tiempoServicio)}
             </td>
 
             <td className="p-2">
@@ -66,8 +97,10 @@ export default function ClientTable({ clientes }: Props) {
               {cliente.finServicio}
             </td>
 
-            <td className="p-2">
-              {cliente.tiempoTramite}
+            <td className="p-2 font-mono">
+
+              {formatearTiempo(cliente.tiempoTramite)}
+
             </td>
 
             <td className="p-2">
